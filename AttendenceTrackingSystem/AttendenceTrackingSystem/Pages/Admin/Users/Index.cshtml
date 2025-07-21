@@ -1,0 +1,148 @@
+﻿@page
+@model AttendanceTrackingSystem.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = "Quản lý người dùng";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>@ViewData["Title"]</h1>
+    <a asp-page="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Thêm người dùng
+    </a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert @(Model.IsSuccess ? "alert-success" : "alert-danger")">
+        <i class="bi @(Model.IsSuccess ? "bi-check-circle" : "bi-exclamation-circle")"></i>
+        @Model.Message
+    </div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Họ tên</th>
+                        <th>Tên đăng nhập</th>
+                        <th>Email</th>
+                        <th>Phòng ban</th>
+                        <th>Chức vụ</th>
+                        <th>Vai trò</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Users.Any())
+                    {
+                        @foreach (var user in Model.Users)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle me-2">
+                                            @user.Name.FirstOrDefault()
+                                        </div>
+                                        <strong>@user.Name</strong>
+                                    </div>
+                                </td>
+                                <td>@user.Username</td>
+                                <td>@user.Email</td>
+                                <td>@user.Department</td>
+                                <td>@user.Position</td>
+                                <td>
+                                    @{
+                                        var badgeClass = user.RoleName.ToLower() switch
+                                        {
+                                            "admin" => "bg-danger",
+                                            "manager" => "bg-warning text-dark",
+                                            "employee" => "bg-primary",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@user.RoleName</span>
+                                </td>
+                                <td>
+                                    <span class="badge @(user.IsActive ? "bg-success" : "bg-secondary")">
+                                        @user.StatusDisplay
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-page="Details" asp-route-id="@user.UserId" class="btn btn-outline-info" title="Xem chi tiết">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-page="Edit" asp-route-id="@user.UserId" class="btn btn-outline-warning" title="Chỉnh sửa">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-secondary" title="Reset mật khẩu"
+                                                onclick="resetPassword(@user.UserId, '@user.Username')">
+                                            <i class="bi bi-key"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" title="Xóa"
+                                                onclick="deleteUser(@user.UserId, '@user.Name')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                Chưa có người dùng nào
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden forms for actions -->
+<form id="resetPasswordForm" method="post" asp-page-handler="ResetPassword" style="display: none;">
+    <input type="hidden" id="resetUserId" name="userId" />
+</form>
+
+<form id="deleteUserForm" method="post" asp-page-handler="Delete" style="display: none;">
+    <input type="hidden" id="deleteUserId" name="userId" />
+</form>
+
+@section Scripts {
+    <script>
+        function resetPassword(userId, username) {
+            if (confirm(`Xác nhận reset mật khẩu cho người dùng "${username}"?`)) {
+                document.getElementById('resetUserId').value = userId;
+                document.getElementById('resetPasswordForm').submit();
+            }
+        }
+
+        function deleteUser(userId, name) {
+            if (confirm(`Xác nhận xóa người dùng "${name}"?\nHành động này không thể hoàn tác!`)) {
+                document.getElementById('deleteUserId').value = userId;
+                document.getElementById('deleteUserForm').submit();
+            }
+        }
+    </script>
+
+    <style>
+        .avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+}

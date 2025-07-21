@@ -1,0 +1,478 @@
+﻿@page
+@model AttendanceTrackingSystem.Pages.Employee.Attendance.HistoryModel
+@{
+    ViewData["Title"] = "Lịch sử chấm công";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-clock-history text-primary me-2"></i>
+                        Lịch sử chấm công
+                    </h2>
+                    <p class="text-muted mb-0">Xem và quản lý lịch sử chấm công cá nhân</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-success" onclick="exportToExcel()">
+                        <i class="bi bi-file-earmark-excel me-2"></i>
+                        Xuất Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-funnel me-2"></i>
+                        Bộ lọc thời gian
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label asp-for="Filter.FromDateStr" class="form-label">Từ ngày</label>
+                                <input asp-for="Filter.FromDateStr" type="date" class="form-control" />
+                                <span asp-validation-for="Filter.FromDateStr" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Filter.ToDateStr" class="form-label">Đến ngày</label>
+                                <input asp-for="Filter.ToDateStr" type="date" class="form-control" />
+                                <span asp-validation-for="Filter.ToDateStr" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-grid gap-2 d-md-flex">
+                                    <button type="submit" class="btn btn-primary flex-fill">
+                                        <i class="bi bi-search me-2"></i>
+                                        Lọc dữ liệu
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="resetFilter()">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Filter Buttons -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="setDateRange(7)">
+                                        7 ngày qua
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="setDateRange(30)">
+                                        30 ngày qua
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="setDateRange(90)">
+                                        3 tháng qua
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="setCurrentMonth()">
+                                        Tháng này
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="setLastMonth()">
+                                        Tháng trước
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-gradient text-white h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-check display-6 mb-2"></i>
+                    <h3 class="mb-1">@Model.Report.TotalPresentDays</h3>
+                    <p class="mb-0 opacity-75">Ngày có mặt</p>
+                    <small class="opacity-75">
+                        Từ @Model.Report.FromDate.ToString("dd/MM") đến @Model.Report.ToDate.ToString("dd/MM")
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-clock display-6 mb-2"></i>
+                    <h3 class="mb-1">@Model.Report.TotalWorkingHours.Hours:@Model.Report.TotalWorkingHours.Minutes.ToString("00")</h3>
+                    <p class="mb-0">Tổng giờ làm</p>
+                    <small>
+                        TB: @Model.Report.AverageWorkingHours.ToString("F1") giờ/ngày
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-exclamation-triangle display-6 mb-2"></i>
+                    <h3 class="mb-1">@Model.Report.LateCheckIns</h3>
+                    <p class="mb-0">Lần đi muộn</p>
+                    <small>
+                        Tỷ lệ: @(Model.Report.TotalPresentDays > 0 ? (Model.Report.LateCheckIns * 100.0 / Model.Report.TotalPresentDays).ToString("F1") : "0")%
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-trophy display-6 mb-2"></i>
+                    <h3 class="mb-1">@Model.Report.AttendanceScore.ToString("F0")%</h3>
+                    <p class="mb-0">Điểm chấm công</p>
+                    <small>
+                        @if (Model.Report.AttendanceScore >= 95)
+                        {
+                            <span>Xuất sắc</span>
+                        }
+                        else if (Model.Report.AttendanceScore >= 85)
+                        {
+                            <span>Tốt</span>
+                        }
+                        else if (Model.Report.AttendanceScore >= 70)
+                        {
+                            <span>Khá</span>
+                        }
+                        else
+                        {
+                            <span>Cần cải thiện</span>
+                        }
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Records Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-table me-2"></i>
+                        Chi tiết chấm công (@Model.AttendanceRecords.Count bản ghi)
+                    </h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="printTable()">
+                                <i class="bi bi-printer me-2"></i>In bảng
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportToExcel()">
+                                <i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.AttendanceRecords.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="attendanceTable">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th class="text-center">#</th>
+                                        <th>Ngày</th>
+                                        <th>Thứ</th>
+                                        <th class="text-center">Giờ vào</th>
+                                        <th class="text-center">Giờ ra</th>
+                                        <th class="text-center">Thời gian làm</th>
+                                        <th class="text-center">Trạng thái</th>
+                                        <th class="text-center">Ghi chú</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        var index = 1;
+                                    }
+                                    @foreach (var record in Model.AttendanceRecords.OrderByDescending(r => r.CheckIn))
+                                    {
+                                        <tr>
+                                            <td class="text-center text-muted">@index</td>
+                                            <td>
+                                                <strong>@record.DateDisplay</strong>
+                                            </td>
+                                            <td>
+                                                <span class="text-muted">
+                                                    @record.CheckIn.ToString("dddd", new System.Globalization.CultureInfo("vi-VN"))
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="@(record.IsLateCheckIn ? "text-danger fw-bold" : "text-success")">
+                                                    @record.CheckInDisplay
+                                                </span>
+                                                @if (record.IsLateCheckIn)
+                                                {
+                                                    <br><small class="badge bg-warning text-dark">Muộn</small>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="@(record.IsEarlyCheckOut ? "text-warning fw-bold" : "text-primary")">
+                                                    @record.CheckOutDisplay
+                                                </span>
+                                                @if (record.IsEarlyCheckOut)
+                                                {
+                                                    <br><small class="badge bg-warning text-dark">Sớm</small>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="@(record.IsFullDay ? "text-success fw-bold" : "text-warning")">
+                                                    @record.WorkingHoursDisplay
+                                                </span>
+                                                <br>
+                                                <small class="badge @(record.IsFullDay ? "bg-success" : "bg-warning text-dark")">
+                                                    @record.WorkingHoursStatus
+                                                </small>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge @record.StatusBadgeClass">
+                                                    @record.StatusDisplay
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                @if (!string.IsNullOrEmpty(record.Notes))
+                                                {
+                                                    <i class="bi bi-chat-left-text text-info" 
+                                                       data-bs-toggle="tooltip" 
+                                                       title="@record.Notes"></i>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">--</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                        index++;
+                                    }
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-3">
+                                            <strong>Tổng kết:</strong>
+                                            @Model.Report.TotalPresentDays ngày làm việc • 
+                                            @Model.Report.TotalWorkingHours.Hours:@Model.Report.TotalWorkingHours.Minutes.ToString("00") tổng giờ làm • 
+                                            @Model.Report.LateCheckIns lần đi muộn • 
+                                            @Model.Report.EarlyCheckOuts lần ra sớm
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+                            <h5 class="text-muted">Không có dữ liệu chấm công</h5>
+                            <p class="text-muted">
+                                Không tìm thấy bản ghi chấm công nào trong khoảng thời gian 
+                                <strong>@Model.Filter.FromDateStr</strong> đến <strong>@Model.Filter.ToDateStr</strong>
+                            </p>
+                            <button type="button" class="btn btn-outline-primary" onclick="resetFilter()">
+                                <i class="bi bi-arrow-clockwise me-2"></i>
+                                Đặt lại bộ lọc
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Quick filter functions
+        function setDateRange(days) {
+            const today = new Date();
+            const fromDate = new Date();
+            fromDate.setDate(today.getDate() - days);
+            
+            document.querySelector('input[name="Filter.FromDateStr"]').value = fromDate.toISOString().split('T')[0];
+            document.querySelector('input[name="Filter.ToDateStr"]').value = today.toISOString().split('T')[0];
+            
+            // Auto submit form
+            document.querySelector('form').submit();
+        }
+
+        function setCurrentMonth() {
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            document.querySelector('input[name="Filter.FromDateStr"]').value = firstDay.toISOString().split('T')[0];
+            document.querySelector('input[name="Filter.ToDateStr"]').value = today.toISOString().split('T')[0];
+            
+            document.querySelector('form').submit();
+        }
+
+        function setLastMonth() {
+            const today = new Date();
+            const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+            
+            document.querySelector('input[name="Filter.FromDateStr"]').value = firstDayLastMonth.toISOString().split('T')[0];
+            document.querySelector('input[name="Filter.ToDateStr"]').value = lastDayLastMonth.toISOString().split('T')[0];
+            
+            document.querySelector('form').submit();
+        }
+
+        function resetFilter() {
+            const today = new Date();
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(today.getMonth() - 1);
+            
+            document.querySelector('input[name="Filter.FromDateStr"]').value = oneMonthAgo.toISOString().split('T')[0];
+            document.querySelector('input[name="Filter.ToDateStr"]').value = today.toISOString().split('T')[0];
+            
+            document.querySelector('form').submit();
+        }
+
+        // Export to Excel function
+        function exportToExcel() {
+            const table = document.getElementById('attendanceTable');
+            const workbook = XLSX.utils.table_to_book(table, {sheet: "Lịch sử chấm công"});
+            
+            // Add report summary to workbook
+            const summaryData = [
+                ['BÁO CÁO LỊCH SỬ CHẤM CÔNG'],
+                ['Từ ngày', '@Model.Report.FromDate.ToString("dd/MM/yyyy")'],
+                ['Đến ngày', '@Model.Report.ToDate.ToString("dd/MM/yyyy")'],
+                ['Nhân viên', '@Model.Report.EmployeeName'],
+                ['Phòng ban', '@Model.Report.Department'],
+                [''],
+                ['THỐNG KÊ TỔNG HỢP'],
+                ['Tổng ngày có mặt', '@Model.Report.TotalPresentDays'],
+                ['Tổng giờ làm việc', '@Model.Report.TotalWorkingHours.Hours:@Model.Report.TotalWorkingHours.Minutes.ToString("00")'],
+                ['Trung bình giờ/ngày', '@Model.Report.AverageWorkingHours.ToString("F1")'],
+                ['Số lần đi muộn', '@Model.Report.LateCheckIns'],
+                ['Số lần ra sớm', '@Model.Report.EarlyCheckOuts'],
+                ['Điểm chấm công', '@Model.Report.AttendanceScore.ToString("F1")%'],
+                ['']
+            ];
+            
+            const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(workbook, summaryWS, "Tổng hợp");
+            
+            // Generate filename with current date
+            const now = new Date();
+            const filename = `LichSuChamCong_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}.xlsx`;
+            
+            XLSX.writeFile(workbook, filename);
+        }
+
+        // Print function
+        function printTable() {
+            const printContent = document.getElementById('attendanceTable').outerHTML;
+            const printWindow = window.open('', '_blank');
+            
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Lịch sử chấm công</title>
+                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                        <style>
+                            body { padding: 20px; }
+                            .table th, .table td { font-size: 12px; }
+                            @@media print {
+                                .table { font-size: 10px; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h3 class="text-center mb-4">LỊCH SỬ CHẤM CÔNG</h3>
+                        <p class="text-center">Từ @Model.Report.FromDate.ToString("dd/MM/yyyy") đến @Model.Report.ToDate.ToString("dd/MM/yyyy")</p>
+                        ${printContent}
+                        <div class="mt-4">
+                            <p><strong>Tổng kết:</strong></p>
+                            <ul>
+                                <li>Tổng ngày có mặt: @Model.Report.TotalPresentDays ngày</li>
+                                <li>Tổng giờ làm việc: @Model.Report.TotalWorkingHours.Hours:@Model.Report.TotalWorkingHours.Minutes.ToString("00")</li>
+                                <li>Số lần đi muộn: @Model.Report.LateCheckIns lần</li>
+                                <li>Điểm chấm công: @Model.Report.AttendanceScore.ToString("F1")%</li>
+                            </ul>
+                        </div>
+                    </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Auto refresh every 5 minutes if viewing today's data
+        setInterval(() => {
+            const toDateInput = document.querySelector('input[name="Filter.ToDateStr"]');
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (toDateInput.value === today && !document.hidden) {
+                location.reload();
+            }
+        }, 300000); // 5 minutes
+    </script>
+
+    <style>
+        .bg-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .sticky-top {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .table-responsive {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .card {
+            transition: box-shadow 0.15s ease-in-out;
+        }
+        
+        .card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        @@media (max-width: 768px) {
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+            
+            .display-6 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+}

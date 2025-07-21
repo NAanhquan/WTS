@@ -1,0 +1,424 @@
+﻿@page
+@model AttendanceTrackingSystem.Pages.Employee.LeaveRequests.IndexModel
+@{
+    ViewData["Title"] = "Đơn nghỉ phép của tôi";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-calendar-event text-primary me-2"></i>
+                        Đơn nghỉ phép của tôi
+                    </h2>
+                    <p class="text-muted mb-0">Quản lý và theo dõi các đơn nghỉ phép cá nhân</p>
+                </div>
+                <div>
+                    <a asp-page="Create" class="btn btn-success">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Tạo đơn nghỉ phép
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Alert -->
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert @(Model.IsSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert">
+            <i class="bi @(Model.IsSuccess ? "bi-check-circle" : "bi-exclamation-circle") me-2"></i>
+            @Model.Message
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Leave Balance Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-check display-6 mb-2"></i>
+                    <h3 class="mb-1">@Model.LeaveBalance.RemainingAnnualLeave</h3>
+                    <p class="mb-0">Nghỉ phép năm còn lại</p>
+                    <small class="opacity-75">
+                        Đã dùng: @Model.LeaveBalance.UsedAnnualLeave/@Model.LeaveBalance.TotalAnnualLeave ngày
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-heart-pulse display-6 mb-2"></i>
+                    <h3 class="mb-1">@Model.LeaveBalance.RemainingSickLeave</h3>
+                    <p class="mb-0">Nghỉ ốm còn lại</p>
+                    <small class="opacity-75">
+                        Đã dùng: @Model.LeaveBalance.UsedSickLeave/@Model.LeaveBalance.TotalSickLeave ngày
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-list-check display-6 mb-2"></i>
+                    <h3 class="mb-1">@Model.LeaveRequests.Count</h3>
+                    <p class="mb-0">Tổng đơn đã tạo</p>
+                    <small class="opacity-75">Năm @DateTime.Now.Year</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-hourglass-split display-6 mb-2"></i>
+                    <h3 class="mb-1">@Model.LeaveRequests.Count(lr => lr.Status == "Pending")</h3>
+                    <p class="mb-0">Đơn chờ duyệt</p>
+                    <small>Cần phê duyệt</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-funnel me-2"></i>
+                        Bộ lọc
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="Filter">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label asp-for="Filter.Status" class="form-label">Trạng thái</label>
+                                <select asp-for="Filter.Status" class="form-select">
+                                    <option value="">-- Tất cả --</option>
+                                    <option value="Pending">Chờ duyệt</option>
+                                    <option value="Approved">Đã duyệt</option>
+                                    <option value="Rejected">Đã từ chối</option>
+                                    <option value="Cancelled">Đã hủy</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="Filter.FromDateStr" class="form-label">Từ ngày</label>
+                                <input asp-for="Filter.FromDateStr" type="date" class="form-control" />
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="Filter.ToDateStr" class="form-label">Đến ngày</label>
+                                <input asp-for="Filter.ToDateStr" type="date" class="form-control" />
+                            </div>
+                            <div class="col-md-3">
+                                <div class="d-grid gap-2 d-md-flex">
+                                    <button type="submit" class="btn btn-primary flex-fill">
+                                        <i class="bi bi-search me-2"></i>
+                                        Lọc
+                                    </button>
+                                    <a asp-page="Index" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leave Requests Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-table me-2"></i>
+                        Danh sách đơn nghỉ phép (@Model.LeaveRequests.Count bản ghi)
+                    </h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="exportToExcel()">
+                                <i class="bi bi-file-earmark-excel me-2"></i>Xuất Excel
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="printTable()">
+                                <i class="bi bi-printer me-2"></i>In danh sách
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.LeaveRequests.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="leaveRequestsTable">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th class="text-center">#</th>
+                                        <th>Thời gian nghỉ</th>
+                                        <th>Số ngày</th>
+                                        <th>Lý do</th>
+                                        <th class="text-center">Trạng thái</th>
+                                        <th class="text-center">Ngày tạo</th>
+                                        <th class="text-center">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        var index = 1;
+                                    }
+                                    @foreach (var request in Model.LeaveRequests.OrderByDescending(lr => lr.StartDate))
+                                    {
+                                        <tr>
+                                            <td class="text-center text-muted">@index</td>
+                                            <td>
+                                                <div>
+                                                    <strong>@request.DateRangeDisplay</strong>
+                                                    @if (request.StartDate < DateOnly.FromDateTime(DateTime.Today) && request.Status == "Approved")
+                                                    {
+                                                        <br><small class="badge bg-info text-dark">Đã diễn ra</small>
+                                                    }
+                                                    else if (request.StartDate == DateOnly.FromDateTime(DateTime.Today) && request.Status == "Approved")
+                                                    {
+                                                        <br><small class="badge bg-primary">Hôm nay</small>
+                                                    }
+                                                    else if (request.StartDate > DateOnly.FromDateTime(DateTime.Today) && request.Status == "Approved")
+                                                    {
+                                                        <br><small class="badge bg-success">Sắp tới</small>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-light text-dark fs-6">
+                                                    @request.TotalDays ngày
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div style="max-width: 200px;">
+                                                    @if (request.Reason.Length > 50)
+                                                    {
+                                                        <span>@request.Reason.Substring(0, 50)...</span>
+                                                        <br><small>
+                                                            <a href="#" data-bs-toggle="tooltip" title="@request.Reason" class="text-info">
+                                                                Xem đầy đủ
+                                                            </a>
+                                                        </small>
+                                                    }
+                                                    else
+                                                    {
+                                                        @request.Reason
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge @request.StatusBadgeClass fs-6">
+                                                    @request.StatusDisplay
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <small class="text-muted">@request.CreatedDateDisplay</small>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="btn-group btn-group-sm">
+                                                    <a asp-page="Details" asp-route-id="@request.LeaveRequestId" 
+                                                       class="btn btn-outline-info" title="Xem chi tiết">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    
+                                                    @if (request.CanEdit)
+                                                    {
+                                                        <a asp-page="Edit" asp-route-id="@request.LeaveRequestId" 
+                                                           class="btn btn-outline-warning" title="Chỉnh sửa">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </a>
+                                                    }
+                                                    
+                                                    @if (request.CanCancel)
+                                                    {
+                                                        <button type="button" class="btn btn-outline-danger" title="Hủy đơn"
+                                                                onclick="cancelRequest(@request.LeaveRequestId, '@request.DateRangeDisplay')">
+                                                            <i class="bi bi-x-circle"></i>
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        index++;
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+                            <h5 class="text-muted">Chưa có đơn nghỉ phép nào</h5>
+                            <p class="text-muted">
+                                Bạn chưa tạo đơn nghỉ phép nào. Hãy tạo đơn nghỉ phép đầu tiên của bạn!
+                            </p>
+                            <a asp-page="Create" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Tạo đơn nghỉ phép
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form for cancellation -->
+<form id="cancelForm" method="post" asp-page-handler="Cancel" style="display: none;">
+    <input type="hidden" id="cancelLeaveRequestId" name="leaveRequestId" />
+</form>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Cancel leave request function
+        function cancelRequest(leaveRequestId, dateRange) {
+            if (confirm(`Xác nhận hủy đơn nghỉ phép "${dateRange}"?\n\nHành động này không thể hoàn tác.`)) {
+                document.getElementById('cancelLeaveRequestId').value = leaveRequestId;
+                document.getElementById('cancelForm').submit();
+            }
+        }
+
+        // Export to Excel function
+        function exportToExcel() {
+            const table = document.getElementById('leaveRequestsTable');
+            if (!table) {
+                alert('Không có dữ liệu để xuất.');
+                return;
+            }
+
+            const workbook = XLSX.utils.table_to_book(table, {sheet: "Đơn nghỉ phép"});
+            
+            // Add summary data
+            const summaryData = [
+                ['BÁO CÁO ĐỀN NGHỈ PHÉP CÁ NHÂN'],
+                ['Nhân viên', '@Model.LeaveBalance.EmployeeName'],
+                ['Năm', '@Model.LeaveBalance.Year'],
+                ['Nghỉ phép năm còn lại', '@Model.LeaveBalance.RemainingAnnualLeave ngày'],
+                ['Nghỉ ốm còn lại', '@Model.LeaveBalance.RemainingSickLeave ngày'],
+                ['Tổng đơn đã tạo', '@Model.LeaveRequests.Count'],
+                ['Đơn chờ duyệt', '@Model.LeaveRequests.Count(lr => lr.Status == "Pending")'],
+                ['Ngày xuất báo cáo', new Date().toLocaleDateString('vi-VN')],
+                ['']
+            ];
+            
+            const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(workbook, summaryWS, "Tổng hợp", 0);
+            
+            const filename = `DonNghiPhep_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(workbook, filename);
+        }
+
+        // Print function
+        function printTable() {
+            const printContent = document.getElementById('leaveRequestsTable')?.outerHTML;
+            if (!printContent) {
+                alert('Không có dữ liệu để in.');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Danh sách đơn nghỉ phép</title>
+                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                        <style>
+                            body { padding: 20px; }
+                            .table th, .table td { font-size: 12px; }
+                            @@media print { .table { font-size: 10px; } }
+                        </style>
+                    </head>
+                    <body>
+                        <h3 class="text-center mb-4">DANH SÁCH ĐỀN NGHỈ PHÉP</h3>
+                        <p class="text-center">Nhân viên: @Model.LeaveBalance.EmployeeName</p>
+                        <p class="text-center">Năm: @DateTime.Now.Year</p>
+                        ${printContent}
+                        <div class="mt-4">
+                            <p><strong>Tóm tắt:</strong></p>
+                            <ul>
+                                <li>Nghỉ phép năm còn lại: @Model.LeaveBalance.RemainingAnnualLeave ngày</li>
+                                <li>Nghỉ ốm còn lại: @Model.LeaveBalance.RemainingSickLeave ngày</li>
+                                <li>Tổng đơn đã tạo: @Model.LeaveRequests.Count</li>
+                                <li>Đơn chờ duyệt: @Model.LeaveRequests.Count(lr => lr.Status == "Pending")</li>
+                            </ul>
+                        </div>
+                    </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Auto refresh every 10 minutes to update status
+        setInterval(() => {
+            if (!document.hidden) {
+                location.reload();
+            }
+        }, 600000); // 10 minutes
+    </script>
+
+    <style>
+        .sticky-top {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .table-responsive {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .card {
+            transition: box-shadow 0.15s ease-in-out;
+        }
+        
+        .card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        @@media (max-width: 768px) {
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+            
+            .display-6 {
+                font-size: 2rem;
+            }
+            
+            .btn-group-sm .btn {
+                padding: 0.25rem 0.4rem;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+}

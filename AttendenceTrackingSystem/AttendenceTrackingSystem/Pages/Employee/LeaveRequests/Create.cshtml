@@ -1,0 +1,389 @@
+﻿@page
+@model AttendanceTrackingSystem.Pages.Employee.LeaveRequests.CreateModel
+@{
+    ViewData["Title"] = "Tạo đơn nghỉ phép";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-plus-circle text-success me-2"></i>
+                        Tạo đơn nghỉ phép
+                    </h2>
+                    <p class="text-muted mb-0">Điền thông tin để tạo đơn nghỉ phép mới</p>
+                </div>
+                <div>
+                    <a asp-page="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Quay lại danh sách
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Message -->
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert @(Model.IsSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert">
+            <i class="bi @(Model.IsSuccess ? "bi-check-circle" : "bi-exclamation-circle") me-2"></i>
+            @Model.Message
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Leave Balance Info -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Thông tin nghỉ phép
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold">Nghỉ phép năm</span>
+                            <span class="badge bg-primary">@Model.LeaveBalance.RemainingAnnualLeave/@Model.LeaveBalance.TotalAnnualLeave</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar" 
+                                 style="width: @(Model.LeaveBalance.TotalAnnualLeave > 0 ? (Model.LeaveBalance.UsedAnnualLeave * 100.0 / Model.LeaveBalance.TotalAnnualLeave) : 0)%"></div>
+                        </div>
+                        <small class="text-muted">Đã sử dụng: @Model.LeaveBalance.UsedAnnualLeave ngày</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold">Nghỉ ốm</span>
+                            <span class="badge bg-success">@Model.LeaveBalance.RemainingSickLeave/@Model.LeaveBalance.TotalSickLeave</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: @(Model.LeaveBalance.TotalSickLeave > 0 ? (Model.LeaveBalance.UsedSickLeave * 100.0 / Model.LeaveBalance.TotalSickLeave) : 0)%"></div>
+                        </div>
+                        <small class="text-muted">Đã sử dụng: @Model.LeaveBalance.UsedSickLeave ngày</small>
+                    </div>
+
+                    <hr>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Lưu ý:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Đơn nghỉ phép cần được duyệt trước khi có hiệu lực</li>
+                            <li>Không thể tạo đơn cho ngày trong quá khứ</li>
+                            <li>Thời gian nghỉ tối đa: 30 ngày liên tiếp</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Form -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-form-check me-2"></i>
+                        Thông tin đơn nghỉ phép
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="createLeaveForm">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <!-- Leave Type -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Input.LeaveType" class="form-label">
+                                    <i class="bi bi-tag me-1"></i>
+                                    Loại nghỉ phép <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="Input.LeaveType" class="form-select" asp-items="Model.LeaveTypeSelectList">
+                                    <option value="">-- Chọn loại nghỉ phép --</option>
+                                </select>
+                                <span asp-validation-for="Input.LeaveType" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Số ngày nghỉ</label>
+                                <div class="input-group">
+                                    <input type="number" id="totalDays" class="form-control" readonly>
+                                    <span class="input-group-text">ngày</span>
+                                </div>
+                                <small class="text-muted">Tự động tính toán dựa trên ngày bắt đầu và kết thúc</small>
+                            </div>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Input.StartDateStr" class="form-label">
+                                    <i class="bi bi-calendar-event me-1"></i>
+                                    Ngày bắt đầu <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Input.StartDateStr" type="date" class="form-control" 
+                                       min="@DateTime.Today.ToString("yyyy-MM-dd")" 
+                                       onchange="calculateDays()">
+                                <span asp-validation-for="Input.StartDateStr" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Input.EndDateStr" class="form-label">
+                                    <i class="bi bi-calendar-event me-1"></i>
+                                    Ngày kết thúc <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Input.EndDateStr" type="date" class="form-control" 
+                                       min="@DateTime.Today.ToString("yyyy-MM-dd")" 
+                                       onchange="calculateDays()">
+                                <span asp-validation-for="Input.EndDateStr" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- Reason -->
+                        <div class="mb-3">
+                            <label asp-for="Input.Reason" class="form-label">
+                                <i class="bi bi-chat-left-text me-1"></i>
+                                Lý do nghỉ phép <span class="text-danger">*</span>
+                            </label>
+                            <textarea asp-for="Input.Reason" class="form-control" rows="4" 
+                                      placeholder="Nhập lý do chi tiết để nghỉ phép..."
+                                      maxlength="500"></textarea>
+                            <div class="form-text">
+                                <span id="reasonLength">0</span>/500 ký tự
+                            </div>
+                            <span asp-validation-for="Input.Reason" class="text-danger"></span>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="alert alert-light border" id="previewSection" style="display: none;">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-eye me-2"></i>
+                                Xem trước đơn nghỉ phép
+                            </h6>
+                            <div id="previewContent"></div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-info" onclick="previewRequest()">
+                                <i class="bi bi-eye me-2"></i>
+                                Xem trước
+                            </button>
+                            <div>
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="resetForm()">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>
+                                    Đặt lại
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    Tạo đơn nghỉ phép
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize form
+            calculateDays();
+            updateReasonLength();
+
+            // Set minimum date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            
+            document.querySelector('input[name="Input.StartDateStr"]').min = tomorrowStr;
+            document.querySelector('input[name="Input.EndDateStr"]').min = tomorrowStr;
+        });
+
+        // Calculate total days
+        function calculateDays() {
+            const startDate = document.querySelector('input[name="Input.StartDateStr"]').value;
+            const endDate = document.querySelector('input[name="Input.EndDateStr"]').value;
+            const totalDaysElement = document.getElementById('totalDays');
+
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                
+                if (end >= start) {
+                    const timeDiff = end.getTime() - start.getTime();
+                    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+                    totalDaysElement.value = daysDiff;
+                    
+                    // Validate against leave balance
+                    validateLeaveBalance(daysDiff);
+                } else {
+                    totalDaysElement.value = 0;
+                }
+            } else {
+                totalDaysElement.value = 0;
+            }
+        }
+
+        // Validate leave balance
+        function validateLeaveBalance(days) {
+            const leaveType = document.querySelector('select[name="Input.LeaveType"]').value;
+            const remainingAnnual = @Model.LeaveBalance.RemainingAnnualLeave;
+            const remainingSick = @Model.LeaveBalance.RemainingSickLeave;
+            
+            const warningDiv = document.getElementById('leaveWarning');
+            if (warningDiv) warningDiv.remove();
+
+            if (leaveType === 'Annual' && days > remainingAnnual) {
+                showLeaveWarning(`Bạn chỉ còn ${remainingAnnual} ngày nghỉ phép năm. Không thể tạo đơn nghỉ ${days} ngày.`);
+            } else if (leaveType === 'Sick' && days > remainingSick) {
+                showLeaveWarning(`Bạn chỉ còn ${remainingSick} ngày nghỉ ốm. Không thể tạo đơn nghỉ ${days} ngày.`);
+            }
+        }
+
+        // Show leave warning
+        function showLeaveWarning(message) {
+            const form = document.getElementById('createLeaveForm');
+            const warningDiv = document.createElement('div');
+            warningDiv.id = 'leaveWarning';
+            warningDiv.className = 'alert alert-danger';
+            warningDiv.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>${message}`;
+            
+            form.insertBefore(warningDiv, form.firstChild);
+        }
+
+        // Update reason length counter
+        function updateReasonLength() {
+            const reasonTextarea = document.querySelector('textarea[name="Input.Reason"]');
+            const lengthCounter = document.getElementById('reasonLength');
+            
+            reasonTextarea.addEventListener('input', function() {
+                lengthCounter.textContent = this.value.length;
+                
+                if (this.value.length > 450) {
+                    lengthCounter.parentElement.classList.add('text-warning');
+                } else if (this.value.length > 480) {
+                    lengthCounter.parentElement.classList.add('text-danger');
+                } else {
+                    lengthCounter.parentElement.classList.remove('text-warning', 'text-danger');
+                }
+            });
+        }
+
+        // Preview request
+        function previewRequest() {
+            const startDate = document.querySelector('input[name="Input.StartDateStr"]').value;
+            const endDate = document.querySelector('input[name="Input.EndDateStr"]').value;
+            const leaveType = document.querySelector('select[name="Input.LeaveType"]');
+            const reason = document.querySelector('textarea[name="Input.Reason"]').value;
+            const totalDays = document.getElementById('totalDays').value;
+
+            if (!startDate || !endDate || !leaveType.value || !reason) {
+                alert('Vui lòng điền đầy đủ thông tin trước khi xem trước.');
+                return;
+            }
+
+            const leaveTypeText = leaveType.options[leaveType.selectedIndex].text;
+            const startFormatted = new Date(startDate).toLocaleDateString('vi-VN');
+            const endFormatted = new Date(endDate).toLocaleDateString('vi-VN');
+
+            const previewContent = `
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <td><strong>Loại nghỉ phép:</strong></td>
+                        <td>${leaveTypeText}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Thời gian:</strong></td>
+                        <td>${startFormatted} - ${endFormatted}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Số ngày:</strong></td>
+                        <td>${totalDays} ngày</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lý do:</strong></td>
+                        <td>${reason}</td>
+                    </tr>
+                </table>
+            `;
+
+            document.getElementById('previewContent').innerHTML = previewContent;
+            document.getElementById('previewSection').style.display = 'block';
+            
+            // Scroll to preview
+            document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Reset form
+        function resetForm() {
+            if (confirm('Xác nhận đặt lại toàn bộ form? Dữ liệu đã nhập sẽ bị mất.')) {
+                document.getElementById('createLeaveForm').reset();
+                document.getElementById('totalDays').value = 0;
+                document.getElementById('reasonLength').textContent = '0';
+                document.getElementById('previewSection').style.display = 'none';
+                
+                const warningDiv = document.getElementById('leaveWarning');
+                if (warningDiv) warningDiv.remove();
+            }
+        }
+
+        // Form validation before submit
+        document.getElementById('createLeaveForm').addEventListener('submit', function(e) {
+            const totalDays = parseInt(document.getElementById('totalDays').value);
+            const leaveType = document.querySelector('select[name="Input.LeaveType"]').value;
+            
+            if (totalDays <= 0) {
+                e.preventDefault();
+                alert('Số ngày nghỉ phải lớn hơn 0.');
+                return;
+            }
+
+            if (totalDays > 30) {
+                e.preventDefault();
+                alert('Số ngày nghỉ không được vượt quá 30 ngày liên tiếp.');
+                return;
+            }
+
+            // Final leave balance check
+            if (leaveType === 'Annual' && totalDays > @Model.LeaveBalance.RemainingAnnualLeave) {
+                e.preventDefault();
+                alert('Số ngày nghỉ phép năm vượt quá số ngày còn lại.');
+                return;
+            }
+        });
+    </script>
+
+    <style>
+        .progress {
+            background-color: #e9ecef;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+        
+        .alert-light {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+        
+        @@media (max-width: 768px) {
+            .btn {
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+}

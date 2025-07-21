@@ -1,0 +1,92 @@
+﻿@using AttendanceTrackingSystem.Services.Interfaces
+@using AttendanceTrackingSystem.ViewModels
+@using AttendenceTrackingSystem.Services.Interfaces
+@inject IAuthenticationService AuthService
+
+@{
+    var currentUser = await AuthService.GetCurrentUserAsync();
+    var userRole = currentUser?.RoleName?.ToLower() ?? "employee";
+}
+
+<ul class="nav nav-pills flex-column mb-auto">
+    <li class="nav-item">
+        <a asp-page="/Dashboard/Index" class="nav-link">
+            <i class="bi bi-house-door"></i> Trang chủ
+        </a>
+    </li>
+
+    @if (userRole == "admin")
+    {
+        <!-- Admin Navigation -->
+        <li class="nav-item">
+            <a asp-page="/Admin/Dashboard" class="nav-link">
+                <i class="bi bi-speedometer2"></i> Dashboard Admin
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/Users/Index" class="nav-link">
+                <i class="bi bi-people"></i> Quản lý người dùng
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/Attendance/Index" class="nav-link">
+                <i class="bi bi-clock"></i> Quản lý chấm công
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/LeaveRequests/Index" class="nav-link">
+                <i class="bi bi-calendar-event"></i> Quản lý nghỉ phép
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/Complaints/Index" class="nav-link">
+                <i class="bi bi-exclamation-diamond"></i> Quản lý khiếu nại
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/Reports/Index" class="nav-link">
+                <i class="bi bi-bar-chart"></i> Báo cáo tổng hợp
+            </a>
+        </li>
+    }
+    else if (userRole == "manager")
+    {
+        <!-- Manager Navigation -->
+        <li class="nav-item">
+            <a asp-page="/Manager/Dashboard" class="nav-link">
+                <i class="bi bi-speedometer2"></i> Dashboard Manager
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Manager/Team/Index" class="nav-link">
+                <i class="bi bi-people"></i> Quản lý nhóm
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Manager/Attendance/Index" class="nav-link">
+                <i class="bi bi-clock"></i> Chấm công nhóm
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Manager/LeaveRequests/Index" class="nav-link">
+                <i class="bi bi-calendar-event"></i> Duyệt nghỉ phép
+            </a>
+        </li>
+    }
+
+    <li class="nav-item">
+        <a asp-page="/Employee/Attendance/Index" class="nav-link">
+            <i class="bi bi-clock-history"></i> Chấm công của tôi
+        </a>
+    </li>
+    <li class="nav-item">
+        <a asp-page="/Employee/LeaveRequests/Index" class="nav-link">
+            <i class="bi bi-calendar-plus"></i> Nghỉ phép của tôi
+        </a>
+    </li>
+    <li class="nav-item">
+        <a asp-page="/Profile/Index" class="nav-link">
+            <i class="bi bi-person-circle"></i> Hồ sơ cá nhân
+        </a>
+    </li>
+</ul>

@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Hệ thống chấm công</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+            .sidebar .nav-link {
+                color: rgba(255,255,255,0.8);
+                padding: 12px 20px;
+                margin: 2px 0;
+                border-radius: 8px;
+                transition: all 0.3s;
+            }
+
+                .sidebar .nav-link:hover, .sidebar .nav-link.active {
+                    color: white;
+                    background: rgba(255,255,255,0.1);
+                }
+
+        .main-content {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .navbar-custom {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h5 class="text-white">
+                            <i class="bi bi-clock-history"></i>
+                            Chấm công
+                        </h5>
+                    </div>
+
+                    <partial name="_Navigation" />
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <!-- Top navbar -->
+                <div class="navbar navbar-custom px-0 mb-3">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h4 class="mb-0">@ViewData["Title"]</h4>
+                        <partial name="_UserInfo" />
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="container-fluid">
+                    @RenderBody()
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

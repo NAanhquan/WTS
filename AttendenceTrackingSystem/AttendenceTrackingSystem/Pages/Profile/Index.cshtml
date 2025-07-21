@@ -1,0 +1,107 @@
+﻿@page
+@model AttendanceTrackingSystem.Pages.Profile.IndexModel
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+}
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="avatar-large mb-3">
+                    @Model.User.Name.FirstOrDefault()
+                </div>
+                <h5>@Model.User.Name</h5>
+                <p class="text-muted">@Model.User.Position</p>
+                <p class="text-muted">@Model.User.Department</p>
+                <span class="badge bg-primary">@Model.User.RoleName</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        @if (!string.IsNullOrEmpty(Model.Message))
+        {
+            <div class="alert @(Model.IsSuccess ? "alert-success" : "alert-danger")">
+                @Model.Message
+            </div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Thông tin cá nhân</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <input asp-for="Input.UserId" type="hidden" />
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Name" class="form-label"></label>
+                        <input asp-for="Input.Name" class="form-control" />
+                        <span asp-validation-for="Input.Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Email" class="form-label"></label>
+                        <input asp-for="Input.Email" class="form-control" type="email" />
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tên đăng nhập</label>
+                            <input value="@Model.User.Username" class="form-control" disabled />
+                            <small class="text-muted">Không thể thay đổi tên đăng nhập</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Vai trò</label>
+                            <input value="@Model.User.RoleName" class="form-control" disabled />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Input.Department" class="form-label"></label>
+                            <input asp-for="Input.Department" class="form-control" readonly />
+                            <small class="text-muted">Liên hệ Admin để thay đổi</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Input.Position" class="form-label"></label>
+                            <input asp-for="Input.Position" class="form-control" readonly />
+                            <small class="text-muted">Liên hệ Admin để thay đổi</small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-page="ChangePassword" class="btn btn-outline-warning">
+                            <i class="bi bi-key"></i> Đổi mật khẩu
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Cập nhật
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <style>
+        .avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 32px;
+            margin: 0 auto;
+        }
+    </style>
+}

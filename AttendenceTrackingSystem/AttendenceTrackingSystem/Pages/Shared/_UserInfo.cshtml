@@ -1,0 +1,34 @@
+﻿@using AttendanceTrackingSystem.Services.Interfaces
+@using AttendenceTrackingSystem.Services.Interfaces
+@inject IAuthenticationService AuthService
+
+@{
+    var currentUser = await AuthService.GetCurrentUserAsync();
+}
+
+@if (currentUser != null)
+{
+    <div class="dropdown">
+        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle"></i>
+            @currentUser.Name
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+                <h6 class="dropdown-header">
+                    @currentUser.Name<br>
+                    <small class="text-muted">@currentUser.RoleName - @currentUser.Department</small>
+                </h6>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" asp-page="/Profile/Index"><i class="bi bi-person"></i> Hồ sơ</a></li>
+            <li><a class="dropdown-item" asp-page="/Profile/ChangePassword"><i class="bi bi-key"></i> Đổi mật khẩu</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" asp-page="/Account/Logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>
+        </ul>
+    </div>
+}
+else
+{
+    <a asp-page="/Account/Login" class="btn btn-primary">Đăng nhập</a>
+}

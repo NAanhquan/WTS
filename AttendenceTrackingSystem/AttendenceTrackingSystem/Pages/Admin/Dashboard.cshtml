@@ -1,0 +1,183 @@
+﻿@page
+@model AttendanceTrackingSystem.Pages.Admin.DashboardModel
+@{
+    ViewData["Title"] = "Dashboard Admin";
+}
+
+<!-- Error Message -->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Statistics Cards -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Tổng nhân viên
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Statistics.TotalUsers</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Đang làm việc hôm nay
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Statistics.TodayActiveUsers</div>
+                        <div class="small text-success">
+                            <i class="bi bi-graph-up"></i>
+                            @Model.Statistics.AttendanceRate.ToString("F1")% tỷ lệ chấm công
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Đơn nghỉ phép chờ duyệt
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Statistics.PendingLeaveRequests</div>
+                        <div class="small text-muted">
+                            Tổng: @Model.Statistics.TotalLeaveRequests đơn
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-calendar-event fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Khiếu nại chưa xử lý
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Statistics.UnresolvedComplaints</div>
+                        <div class="small text-muted">
+                            Tổng: @Model.Statistics.TotalComplaints khiếu nại
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities & Department Stats -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Hoạt động gần đây</h6>
+                <a href="#" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+            </div>
+            <div class="card-body">
+                @if (Model.RecentActivities.Any())
+                {
+                    @foreach (var activity in Model.RecentActivities)
+                    {
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                <i class="bi @activity.TypeIcon text-@(activity.Type.ToLower() switch
+                                    {
+                                        "leaverequest" => "warning",
+                                        "complaint" => "danger",
+                                        "attendance" => "info",
+                                        _ => "secondary"
+                                    })"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-bold">@activity.Description</div>
+                                <div class="text-muted small">
+                                    @activity.TimeDisplay
+                                    @if (!string.IsNullOrEmpty(activity.Department))
+                                    {
+                                        <span class="badge bg-light text-dark ms-2">@activity.Department</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <span class="badge @activity.StatusBadgeClass">@activity.Status</span>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+                        <p class="text-muted">Chưa có hoạt động nào gần đây</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Thống kê theo phòng ban</h6>
+            </div>
+            <div class="card-body">
+                @if (Model.Statistics.DepartmentUserCount.Any())
+                {
+                    @foreach (var dept in Model.Statistics.DepartmentUserCount)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="text-truncate">
+                                <strong>@dept.Key</strong>
+                            </div>
+                            <div>
+                                <span class="badge bg-primary rounded-pill">@dept.Value</span>
+                            </div>
+                        </div>
+                        <div class="progress progress-sm mb-3">
+                            <div class="progress-bar"
+                                 style="width: @(Model.Statistics.TotalUsers > 0 ? (dept.Value * 100.0 / Model.Statistics.TotalUsers) : 0)%"></div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted text-center">Chưa có dữ liệu phòng ban</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
